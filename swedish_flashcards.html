@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Svenska Fraser — Swedish Phrase Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1220;
+  --bg2: #101828;
+  --surface: #1a2540;
+  --surface2: #1e2e50;
+  --border: #2a3d6a;
+  --text: #e8edf8;
+  --text-dim: #8a9bbf;
+  --text-muted: #4a5a80;
+  --accent: #5d9bd4;
+  --accent2: #3a7bbf;
+  --easy: #4caf7d;
+  --medium: #e8a838;
+  --hard: #e05252;
+  --easy-bg: rgba(76,175,125,0.12);
+  --medium-bg: rgba(232,168,56,0.12);
+  --hard-bg: rgba(224,82,82,0.12);
+  --card-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  --radius: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Crimson Pro', Georgia, serif;
+  overflow: hidden;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(93,155,212,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(58,123,191,0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+#app {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.header {
+  padding: 20px 0 12px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.header h1 {
+  font-size: 1.15rem;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.header .flag { font-size: 1.4rem; }
+.btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.reset-btn {
+  color: var(--text-muted);
+}
+.reset-btn:hover {
+  color: var(--hard);
+  border-color: rgba(224,82,82,0.4);
+  background: rgba(224,82,82,0.08);
+}
+.export-btn {
+  color: var(--accent);
+  border-color: rgba(93,155,212,0.4);
+}
+.export-btn:hover {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.confirm-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,16,32,0.9);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  text-align: center;
+}
+.confirm-overlay.active { display: flex; }
+.confirm-overlay h3 { font-size: 1.4rem; font-weight: 300; color: var(--text); }
+.confirm-overlay p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-family: 'DM Mono', monospace;
+  max-width: 300px;
+  line-height: 1.6;
+}
+.confirm-buttons { display: flex; gap: 12px; }
+.confirm-yes {
+  padding: 12px 28px;
+  background: var(--hard);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.confirm-yes:hover { filter: brightness(1.15); }
+.confirm-no {
+  padding: 12px 28px;
+  background: var(--surface);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.confirm-no:hover { background: var(--surface2); }
+.progress-wrap { flex-shrink: 0; margin-bottom: 12px; }
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+}
+.round-badge {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 20px;
+  color: var(--accent);
+  font-size: 0.65rem;
+}
+.progress-bar { height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px 0;
+  min-height: 0;
+}
+.flashcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 40px 36px;
+  box-shadow: var(--card-shadow);
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+.flashcard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.5;
+}
+.flashcard:active { transform: scale(0.985); box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+.word-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.swedish-phrase {
+  font-size: clamp(1.4rem, 4.5vw, 2.1rem);
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+.english-phrase {
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--accent);
+  line-height: 1.4;
+  max-width: 90%;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.english-phrase.revealed { opacity: 1; transform: translateY(0); }
+.tap-hint {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  position: absolute;
+  bottom: 16px;
+  right: 20px;
+}
+.rating-section {
+  margin-top: 16px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.rating-section.visible { opacity: 1; transform: translateY(0); pointer-events: all; }
+.rating-label {
+  text-align: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.rating-buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.rating-btn {
+  padding: 14px 8px;
+  border: 1px solid;
+  border-radius: 10px;
+  background: transparent;
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.rating-btn .btn-icon { font-size: 1.2rem; }
+.rating-btn.easy { color: var(--easy); border-color: rgba(76,175,125,0.3); background: var(--easy-bg); }
+.rating-btn.medium { color: var(--medium); border-color: rgba(232,168,56,0.3); background: var(--medium-bg); }
+.rating-btn.hard { color: var(--hard); border-color: rgba(224,82,82,0.3); background: var(--hard-bg); }
+.rating-btn:hover { transform: translateY(-2px); filter: brightness(1.15); }
+.rating-btn:active { transform: translateY(0) scale(0.96); }
+.stats-strip {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 10px 0 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+}
+.stat { display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
+.stat-dot { width: 7px; height: 7px; border-radius: 50%; }
+.stat.easy .stat-dot { background: var(--easy); }
+.stat.medium .stat-dot { background: var(--medium); }
+.stat.hard .stat-dot { background: var(--hard); }
+.round-complete {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,16,32,0.92);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 24px;
+  text-align: center;
+  gap: 24px;
+}
+.round-complete.active { display: flex; }
+.round-complete h2 { font-size: 2rem; font-weight: 300; color: var(--accent); letter-spacing: -0.01em; }
+.round-complete p { color: var(--text-dim); font-size: 1.1rem; font-weight: 300; max-width: 340px; line-height: 1.6; }
+.round-summary { display: flex; gap: 20px; justify-content: center; font-family: 'DM Mono', monospace; font-size: 0.75rem; }
+.sum-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+}
+.sum-num { font-size: 1.5rem; color: var(--text); font-family: 'Crimson Pro', serif; }
+.sum-num.easy { color: var(--easy); }
+.sum-num.medium { color: var(--medium); }
+.sum-num.hard { color: var(--hard); }
+.sum-label { color: var(--text-muted); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.continue-btn {
+  padding: 16px 40px;
+  background: var(--accent2);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Crimson Pro', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+.continue-btn:hover { background: var(--accent); transform: translateY(-2px); }
+.score-pills {
+  display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; flex-shrink: 0;
+}
+.score-pill {
+  display: flex; align-items: center; gap: 6px; padding: 6px 14px;
+  border-radius: 20px; border: 1px solid;
+  font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.06em;
+  transition: all 0.25s ease;
+}
+.score-pill.easy { color: var(--easy); border-color: rgba(76,175,125,0.35); background: var(--easy-bg); }
+.score-pill.medium { color: var(--medium); border-color: rgba(232,168,56,0.35); background: var(--medium-bg); }
+.score-pill.hard { color: var(--hard); border-color: rgba(224,82,82,0.35); background: var(--hard-bg); }
+.score-pill .pill-num { font-size: 1rem; font-family: 'Crimson Pro', serif; font-weight: 600; min-width: 1.2ch; text-align: right; }
+.score-pill.bumped { transform: scale(1.12); transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes cardSlideIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.flashcard.animating { animation: cardSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+@media (max-height: 700px) {
+  .flashcard { min-height: 180px; padding: 28px 28px; }
+  .header { padding: 14px 0 8px; }
+  .stats-strip { padding: 8px 0 14px; }
+  .score-pills { margin-bottom: 8px; }
+}
+@media (max-width: 400px) {
+  .rating-btn { padding: 12px 4px; font-size: 0.9rem; }
+  .flashcard { padding: 32px 24px; }
+  .score-pill { padding: 5px 10px; font-size: 0.66rem; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Svenska Fraser</h1>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span id="sync-status" style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--text-muted);letter-spacing:0.06em;"></span>
+      <button class="btn export-btn" onclick="exportRatings()">Export</button>
+      <button class="btn reset-btn" onclick="confirmReset()">Reset</button>
+      <span class="flag">🇸🇪</span>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-info">
+      <span id="progress-text">0 / 0</span>
+      <span class="round-badge" id="round-badge">Round 1</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="score-pills">
+    <div class="score-pill easy" id="pill-easy"><span class="pill-num" id="pill-easy-num">0</span><span>Easy</span></div>
+    <div class="score-pill medium" id="pill-medium"><span class="pill-num" id="pill-medium-num">0</span><span>Medium</span></div>
+    <div class="score-pill hard" id="pill-hard"><span class="pill-num" id="pill-hard-num">0</span><span>Hard</span></div>
+  </div>
+
+  <div class="card-area">
+    <div class="flashcard" id="flashcard" tabindex="0" role="button" aria-label="Tap to reveal English translation">
+      <span class="word-label">Svenska</span>
+      <div class="swedish-phrase" id="swedish-phrase">—</div>
+      <div class="english-phrase" id="english-phrase"></div>
+      <span class="tap-hint" id="tap-hint">tap to reveal</span>
+    </div>
+  </div>
+
+  <div class="rating-section" id="rating-section">
+    <div class="rating-label">How well did you know this?</div>
+    <div class="rating-buttons">
+      <button class="rating-btn easy" onclick="rate('easy')"><span class="btn-icon">😊</span><span>Easy</span></button>
+      <button class="rating-btn medium" onclick="rate('medium')"><span class="btn-icon">🤔</span><span>Medium</span></button>
+      <button class="rating-btn hard" onclick="rate('hard')"><span class="btn-icon">😤</span><span>Hard</span></button>
+    </div>
+  </div>
+
+  <div class="stats-strip">
+    <div class="stat easy"><div class="stat-dot"></div><span id="easy-count">0 easy</span></div>
+    <div class="stat medium"><div class="stat-dot"></div><span id="medium-count">0 medium</span></div>
+    <div class="stat hard"><div class="stat-dot"></div><span id="hard-count">0 hard</span></div>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="confirm-overlay">
+  <h3>Reset all progress?</h3>
+  <p>This will clear your phrase ratings and start from Round 1.</p>
+  <div class="confirm-buttons">
+    <button class="confirm-no" onclick="cancelReset()">Cancel</button>
+    <button class="confirm-yes" onclick="doReset()">Reset</button>
+  </div>
+</div>
+
+<div class="round-complete" id="round-complete">
+  <h2 id="rc-title">Round Complete!</h2>
+  <p id="rc-desc"></p>
+  <div class="round-summary">
+    <div class="sum-item"><span class="sum-num easy" id="rc-easy">0</span><span class="sum-label">Easy</span></div>
+    <div class="sum-item"><span class="sum-num medium" id="rc-medium">0</span><span class="sum-label">Medium</span></div>
+    <div class="sum-item"><span class="sum-num hard" id="rc-hard">0</span><span class="sum-label">Hard</span></div>
+  </div>
+  <button class="continue-btn" id="continue-btn" onclick="startNextRound()">Continue →</button>
+</div>
+
+<script>
+const ALL_PHRASES = [{"sv": "Jag är kär", "en": "I am in love"}, {"sv": "Oroa dig inte", "en": "Don't worry"}, {"sv": "Har du träffat henne ännu?", "en": "Have you met her yet?"}, {"sv": "Jag har inget val", "en": "I have no choice"}, {"sv": "Sov gott", "en": "Sleep well"}, {"sv": "Jag lovar", "en": "I promise"}, {"sv": "Massorna hurrade", "en": "The crowds cheered"}, {"sv": "Hur lång är flygresan?", "en": "How long is the flight?"}, {"sv": "Ha en säker resa hem", "en": "Have a safe journey home"}, {"sv": "Ta för dig", "en": "Help yourself"}, {"sv": "Jag kommer att överväga det", "en": "I will consider it"}, {"sv": "Har du anlänt?", "en": "Have you arrived?"}, {"sv": "Det är för sent", "en": "It is too late"}, {"sv": "Godnatt", "en": "Good night"}, {"sv": "Jag är glömsk", "en": "I am forgetful"}, {"sv": "Släck ljuset", "en": "Turn off the light"}, {"sv": "Jag är lite ringrostig", "en": "I'm a little out of practice"}, {"sv": "De gick för långt", "en": "They overdid it"}, {"sv": "Lägg tillbaka den", "en": "Please put it back"}, {"sv": "Jag arbetar i en butik", "en": "I work in a shop"}, {"sv": "Vad tänker du på?", "en": "What are you thinking about?"}, {"sv": "Det är iskallt", "en": "It's freezing cold"}, {"sv": "Har du någonsin varit i Italien?", "en": "Have you ever been to Italy?"}, {"sv": "Hur länge kommer du att stanna?", "en": "How long will you be staying for?"}, {"sv": "Tyvärr, jag har inte en penna", "en": "Sorry, I don't have a pen"}, {"sv": "Alla vet det", "en": "Everyone knows it"}, {"sv": "Ring en ambulans!", "en": "Call an ambulance!"}, {"sv": "Det tar 2 timmar med bil", "en": "It takes 2 hours by car"}, {"sv": "Jag beklagar", "en": "Sorry to hear that"}, {"sv": "Jag måste koncentrera mig", "en": "I need to concentrate"}, {"sv": "Han kommer tillbaka om 20 minuter", "en": "He'll be back in 20 minutes"}, {"sv": "Jag tar dig till busshållplatsen", "en": "I'll take you to the bus stop"}, {"sv": "Jag tar samma sak", "en": "I'll have the same thing"}, {"sv": "Vill du ta mig hem?", "en": "Would you take me home?"}, {"sv": "Vid vilken tidpunkt hände det?", "en": "At what time did it happen?"}, {"sv": "Vilken tid stänger köket?", "en": "What time does the kitchen close?"}, {"sv": "Annonsen var oärlig", "en": "The advert was dishonest"}, {"sv": "Jag åt för mycket", "en": "I ate too much"}, {"sv": "Det var länge sedan", "en": "Long time no see"}, {"sv": "Det blev oavgjort", "en": "It was a draw"}, {"sv": "Utfallet var dåligt", "en": "The outcome was bad"}, {"sv": "Var lade jag mina nycklar?", "en": "Where did I leave my keys?"}, {"sv": "Är det kallt ute?", "en": "Is it cold outside?"}, {"sv": "Du ser bra ut", "en": "You look great"}, {"sv": "Du är vacker", "en": "You're beautiful"}, {"sv": "Jag är bisexuell", "en": "I am bisexual"}, {"sv": "Jag stannar hemma ikväll", "en": "I'm staying in tonight"}, {"sv": "Det är inte alltför långt", "en": "It's not too far"}, {"sv": "Den är en gåva", "en": "It is a gift"}, {"sv": "Vägarna är hala", "en": "The roads are slippery"}, {"sv": "Jag behöver plugga", "en": "I need to study"}, {"sv": "Det är hård sjö", "en": "The sea is very rough"}, {"sv": "Jag har gjorts överflödig", "en": "I've been made redundant"}, {"sv": "Jag har inget emot det", "en": "I don't mind"}, {"sv": "Är din son här?", "en": "Is your son here?"}, {"sv": "Jättegärna", "en": "I'd love to"}, {"sv": "Jag saknar dig", "en": "I miss you"}, {"sv": "Jag behöver dig", "en": "I need you"}, {"sv": "Skulle någon vilja ha kaffe?", "en": "Would anyone like coffee?"}, {"sv": "Gör inte det", "en": "Don't do that"}, {"sv": "Tallriken är varm", "en": "The plate is hot"}, {"sv": "Har du en flickvän?", "en": "Do you have a girlfriend?"}, {"sv": "Vilken tid anländer du?", "en": "What time will you arrive?"}, {"sv": "Jag behöver en handduk", "en": "I need a towel"}, {"sv": "Ta det utanför", "en": "Take it outside"}, {"sv": "Kan jag få låna din telefon?", "en": "Could I use your phone?"}, {"sv": "Du är väldigt snygg", "en": "You are very handsome"}, {"sv": "Hur smakar det?", "en": "How does it taste?"}, {"sv": "Spelar du någon sport?", "en": "Do you play any sports?"}, {"sv": "Vill du gifta dig med mig?", "en": "Will you marry me?"}, {"sv": "Hon är söt", "en": "She is pretty"}, {"sv": "Jag ger upp", "en": "I give up"}, {"sv": "Jag rörde den inte", "en": "I did not touch it"}, {"sv": "Nyligen", "en": "Recently"}, {"sv": "Hon saknar självförtroende", "en": "She lacks confidence"}, {"sv": "Han är inte här just nu", "en": "He's not in right now"}, {"sv": "Jag har för mycket arbete att göra", "en": "I've got too much work to do"}, {"sv": "Är det riskabelt?", "en": "Is it risky?"}, {"sv": "I kväll", "en": "Tonight"}, {"sv": "Skulle du vilja skicka mig saltet?", "en": "Please pass the salt"}, {"sv": "Jag tycker om att umgås med dig", "en": "I enjoy spending time with you"}, {"sv": "Är det första gången du är här?", "en": "Is this your first time here?"}, {"sv": "Hur mycket är jag skyldig dig?", "en": "How much do I owe you?"}, {"sv": "Opinionen ändrades", "en": "There was a shift in opinion"}, {"sv": "Någon gör det åt mig", "en": "Someone does that for me"}, {"sv": "Jag kommer från [land]", "en": "I am from [country]"}, {"sv": "Jag tycker inte om pubar", "en": "I don't like pubs"}, {"sv": "Jag mår bra tack", "en": "I'm fine, thanks"}, {"sv": "Det är riktigt varmt", "en": "It's really hot"}, {"sv": "Jag vill inte störa dig", "en": "I don't want to bother you"}, {"sv": "Jag är på semester", "en": "I am on holiday"}, {"sv": "Jag arbetar som säljare", "en": "I work in sales"}, {"sv": "Vad heter du?", "en": "What is your name?"}, {"sv": "Jag kom med min familj", "en": "I came with my family"}, {"sv": "Hur mycket kostar den här?", "en": "How much does this cost?"}, {"sv": "En bra film visas senare", "en": "There's a good film on later"}, {"sv": "Det var ansträngande", "en": "That was stressful"}, {"sv": "Jag jobbar här", "en": "I work here"}, {"sv": "Du korsar några järnvägsspår", "en": "You'll cross some railway lines"}, {"sv": "Jag ville bo utomlands", "en": "I wanted to live abroad"}, {"sv": "Vi har gott om tid", "en": "We have plenty of time"}, {"sv": "Det där är praktiskt", "en": "That is practical"}, {"sv": "Det var tur", "en": "That was lucky"}, {"sv": "Har du några startkablar?", "en": "Have you got any jump leads?"}, {"sv": "Hur mycket socker tar du?", "en": "How many sugars do you take?"}, {"sv": "Kom hit", "en": "Come here"}, {"sv": "Ledsen för förseningen", "en": "Sorry for the delay"}, {"sv": "Du ser bra ut", "en": "You look well"}, {"sv": "Om en timme", "en": "In an hour"}, {"sv": "Spelar du basket?", "en": "Do you play basketball?"}, {"sv": "Studerar du engelska?", "en": "Do you study English?"}, {"sv": "Behåll växeln", "en": "Keep the change"}, {"sv": "De har ingenting gemensamt", "en": "They have nothing in common"}, {"sv": "Hur allvarligt är det?", "en": "How serious is it?"}, {"sv": "Skulle du vilja ha lite vin?", "en": "Would you like some wine?"}, {"sv": "Varning för hunden!", "en": "Beware of the dog!"}, {"sv": "Han har en fin bil", "en": "He has a nice car"}, {"sv": "Gå den vägen", "en": "Go that way"}, {"sv": "Sätt på ugnen", "en": "Put the ovan on"}, {"sv": "Inte alls", "en": "Not at all"}, {"sv": "Har du något tilltugg?", "en": "Do you have any snacks?"}, {"sv": "Här är mitt boknungsnummer", "en": "Here's my booking reference"}, {"sv": "Jag är ambitiös", "en": "I am ambitious"}, {"sv": "Detta fungerar inte", "en": "This doesn't work"}, {"sv": "Hur är det fatt?", "en": "What is wrong?"}, {"sv": "Han behöver nya kläder", "en": "He needs new clothes"}, {"sv": "Jag sjunger i kör", "en": "I sing in a choir"}, {"sv": "Serverar du fortfarande mat?", "en": "Are you still serving food?"}, {"sv": "Ursäkta att vi är sena", "en": "Sorry we're late"}, {"sv": "Jag har jetlag", "en": "I have jet-lag"}, {"sv": "Det är dags att reflektera", "en": "It is time to reflect"}, {"sv": "Vad vill du göra?", "en": "What do you want to do?"}, {"sv": "Det måste vara ett misstag", "en": "It must be a mistake"}, {"sv": "Han var otrogen", "en": "He cheated on her"}, {"sv": "Tack så mycket", "en": "Thank you very much"}, {"sv": "Det är väldigt kallt idag", "en": "It's very cold today"}, {"sv": "Jag har aldrig gjort det förut", "en": "I have never done that before"}, {"sv": "Fortsätt så!", "en": "Steady on!"}, {"sv": "Jag skojar bara", "en": "I'm just kidding"}, {"sv": "Jag är på gott humör", "en": "I'm in a good mood"}, {"sv": "Prata inte strunt", "en": "Don't talk rubbish"}, {"sv": "Jag är egenföretagare", "en": "I work for myself"}, {"sv": "Kan jag låna din penna?", "en": "Can I borrow your pen?"}, {"sv": "Jag har ett problem", "en": "I have a problem"}, {"sv": "Vad gjorde du igår?", "en": "What did you do yesterday?"}, {"sv": "Det börjar regna", "en": "It's starting to rain"}, {"sv": "Jag är 32", "en": "I'm 32"}, {"sv": "Ett år sedan", "en": "A year ago"}, {"sv": "Jag tränar för att bli ingenjör", "en": "I'm training to be an engineer"}, {"sv": "Det här är väldigt viktigt", "en": "This is very important"}, {"sv": "Jag har spenderat allt", "en": "I have spent it all"}, {"sv": "Jag borde gå", "en": "I should leave"}, {"sv": "Jag är en praktikant", "en": "I'm a trainee"}, {"sv": "Vilken gata är det?", "en": "What street is it?"}, {"sv": "Min bil startar inte", "en": "My car won't start"}, {"sv": "Ses snart!", "en": "See you soon!"}, {"sv": "Jag tycker om att meditera", "en": "I like to meditate"}, {"sv": "De kommer snart tillbaka", "en": "They'll be right back"}, {"sv": "Min klocka har stulits", "en": "My watch has been stolen"}, {"sv": "Det var min uppfinning", "en": "It was my invention"}, {"sv": "Vill du upprepa det?", "en": "Would you please repeat that?"}, {"sv": "Hur många personer?", "en": "How many people?"}, {"sv": "Jag älskar bio", "en": "I love the cinema"}, {"sv": "Mår du bra?", "en": "Are you OK?"}, {"sv": "Det dröjde inte länge", "en": "It did not last long"}, {"sv": "Jag är delägare i en advokatbyrå", "en": "I'm a partner in a law firm"}, {"sv": "Den där var delikat", "en": "That was very delicious"}, {"sv": "Trevligt att träffas", "en": "Pleased to meet you"}, {"sv": "Jag har inte tillräckligt med pengar", "en": "I don't have enough money"}, {"sv": "Kanske", "en": "Maybe"}, {"sv": "Jag förstår nu", "en": "I understand now"}, {"sv": "Vad gör du ikväll?", "en": "What are you doing tonight?"}, {"sv": "Boken ligger på bordet", "en": "The book is on top of the table"}, {"sv": "Vad är chanserna?", "en": "What are the chances?"}, {"sv": "Ge aldrig upp", "en": "Never give up"}, {"sv": "Vad önskar du?", "en": "What is your preference?"}, {"sv": "Det här är min hållplats", "en": "I'm getting off here"}, {"sv": "Starta bilen", "en": "Start the car"}, {"sv": "Det är upp till dig", "en": "It's up to you"}, {"sv": "Kan jag köpa en biljett på bussen?", "en": "Can I buy a ticket on the bus?"}, {"sv": "Bra gjort!", "en": "Well done!"}, {"sv": "Det ska regna imorgon", "en": "It's supposed to rain tomorrow"}, {"sv": "Jag fruktar det värsta", "en": "I fear the worst"}, {"sv": "Vilken fruktansvärd dag!", "en": "What a terrible day!"}, {"sv": "Jag är på mitt sista år", "en": "I'm in my final year"}, {"sv": "Vilken skola gick du i?", "en": "What school did you go to?"}, {"sv": "Jag älskar teater", "en": "I love the theatre"}, {"sv": "Jag arbetar för en bank", "en": "I work for a bank"}, {"sv": "Hur många barn har du?", "en": "How many children do you have?"}, {"sv": "Tyvärr, du är inte min typ", "en": "Sorry, you're not my type"}, {"sv": "Jag gillar att springa", "en": "I like jogging"}, {"sv": "Ligger banken långt bort?", "en": "Is the bank far?"}, {"sv": "Om två månader", "en": "In two months"}, {"sv": "Vad ska jag ha på mig?", "en": "What should I wear?"}, {"sv": "Jag ska tala om för honom vad du", "en": "heter"}, {"sv": "Vem kör i kväll?", "en": "Who's driving tonight?"}, {"sv": "Vi gick på samma universitet", "en": "We went to the same university"}, {"sv": "Tyvärr, jag förstod inte", "en": "Sorry, I didn't understand"}, {"sv": "Det är inte allvarligt", "en": "It's not serious"}, {"sv": "Jag är inte upptagen", "en": "I'm not busy"}, {"sv": "Skriv ned det", "en": "Please write it down"}, {"sv": "Vi har två pojkar", "en": "We have two boys"}, {"sv": "Det luktar illa", "en": "That smells bad"}, {"sv": "För mycket stress", "en": "Too much stress"}, {"sv": "Var ligger ...?", "en": "Where is ...?"}, {"sv": "Jag spelar i ett band", "en": "I'm in a band"}, {"sv": "Jag vill inte att...", "en": "I don't want that..."}, {"sv": "Vi har haft en olycka", "en": "We've had an accident"}, {"sv": "Hur var mötet?", "en": "How was the meeting?"}, {"sv": "Jag tappade bort min plånbok", "en": "I lost my wallet"}, {"sv": "Kommer du hit ofta?", "en": "Do you come here often?"}, {"sv": "Varför gråter du?", "en": "Why are you crying?"}, {"sv": "Följande vecka", "en": "The following week"}, {"sv": "Jag har arbetat här i nio år", "en": "I've worked here for nine years"}, {"sv": "Har du sett den här filmen?", "en": "Have you seen this movie?"}, {"sv": "Vad ska du välja?", "en": "What are you going to have?"}, {"sv": "Varför inte?", "en": "Why not?"}, {"sv": "Jag har glömt mitt paraply", "en": "I forgot my umbrella"}, {"sv": "Vi ses där", "en": "I'll see you there"}, {"sv": "Jag är revisor", "en": "I'm an accountant"}, {"sv": "Han är mycket mogen", "en": "He is very mature"}, {"sv": "Grattis på födelsedagen", "en": "Happy Birthday"}, {"sv": "Jag är judisk", "en": "I'm Jewish"}, {"sv": "Jag gillar henne", "en": "I like her"}, {"sv": "När skulle du vilja resa?", "en": "When would you like to travel?"}, {"sv": "Den där var onormal", "en": "That was abnormal"}, {"sv": "Har du varit här länge?", "en": "Have you been here long?"}, {"sv": "Hur går det med jobbet?", "en": "How is work going?"}, {"sv": "Vad heter hon?", "en": "What is her name?"}, {"sv": "Kan jag följa dig hem?", "en": "Can I walk you home?"}, {"sv": "Jag är intresserad av kultur", "en": "I am interested in culture"}, {"sv": "Vilken tid börjar matchen?", "en": "What time is the match on?"}, {"sv": "Är du arg?", "en": "Are you angry?"}, {"sv": "Kvaliteten var dålig", "en": "The quality was bad"}, {"sv": "Förlåt för att du fick vänta", "en": "Sorry to keep you waiting"}, {"sv": "Du har ett vackert leende", "en": "You've got a great smile"}, {"sv": "Det var så lite", "en": "Don't mention it"}, {"sv": "Jag tror dig", "en": "I believe you"}, {"sv": "Vad gör du?", "en": "What are you up to?"}, {"sv": "Vad är processen?", "en": "What is the process?"}, {"sv": "Skicka mig ett mail", "en": "Send me an email"}, {"sv": "Är du gift?", "en": "Are you married?"}, {"sv": "I morgon", "en": "Tomorrow"}, {"sv": "Jag är överviktig", "en": "I am overweight"}, {"sv": "Vi är alla vinnare", "en": "We are all winners"}, {"sv": "Vädret är bedrövligt", "en": "The weather is miserable"}, {"sv": "Hur gammal är hon?", "en": "How old is she?"}, {"sv": "Tala om för henne att [namn] ringde", "en": "Please tell her [name| called"}, {"sv": "Det är inte värt det", "en": "It's not worth it"}, {"sv": "Jag bor själv", "en": "I live on my own"}, {"sv": "Det spelar ingen roll", "en": "It doesn't matter"}, {"sv": "Jag har inte ätit lunch ännu", "en": "I haven't had lunch yet"}, {"sv": "Jag väntar på dig", "en": "I'm waiting for you"}, {"sv": "Min dotter är här", "en": "My daughter is here"}, {"sv": "Vill du följa med mig?", "en": "Do you want to come with me?"}, {"sv": "Sluta gräla", "en": "Please stop arguing"}, {"sv": "Det är komplicerat", "en": "It is complicated"}, {"sv": "Jag arbetar i en fabrik", "en": "I work in a factory"}, {"sv": "Vi börjar få ont om tid", "en": "We are running out of time"}, {"sv": "Vi har mycket gemensamt", "en": "We have a lot in common"}, {"sv": "Det börjar bli sent", "en": "It is getting late"}, {"sv": "Kanske", "en": "Perhaps"}, {"sv": "Göm den", "en": "Hide it"}, {"sv": "Hon är mycket energisk", "en": "She is very energetic"}, {"sv": "Jag har redan sett den", "en": "I've already seen it"}, {"sv": "Jag behöver massage", "en": "I need a massage"}, {"sv": "Mitt bagage saknas", "en": "My luggage is missing"}, {"sv": "Jag mår inte bra", "en": "I don't feel well"}, {"sv": "Det var ett personligt angrepp", "en": "It was a personal attack"}, {"sv": "Har du några husdjur?", "en": "Have you got any pets?"}, {"sv": "Tack för hjälpen", "en": "Thanks for your help"}, {"sv": "Jag är väldigt upptagen", "en": "I'm very busy"}, {"sv": "Jag ska tänka på det", "en": "I will think about it"}, {"sv": "Varför kommer du inte?", "en": "Why aren't you going?"}, {"sv": "Min kärlek är oändlig", "en": "My love is infinite"}, {"sv": "Om tio minuter", "en": "In ten minutes"}, {"sv": "Jag skulle föredra att låta bli", "en": "I would prefer not to"}, {"sv": "Har du barn?", "en": "Do you have children?"}, {"sv": "Vad rekommenderar du?", "en": "What do you recommend?"}, {"sv": "Jag tar också den", "en": "I'll also take that one"}, {"sv": "Jag är hemma", "en": "I'm at home"}, {"sv": "Väx upp", "en": "Grow-up"}, {"sv": "På morgonen", "en": "In the morning"}, {"sv": "Är det tillräckligt?", "en": "Is that enough?"}, {"sv": "Nästa vecka", "en": "Next week"}, {"sv": "Det är en lång helg", "en": "It is a long weekend"}, {"sv": "Han är en amerikansk", "en": "He's an American"}, {"sv": "Kan jag få ett kvitto, tack?", "en": "Could I have a receipt, please?"}, {"sv": "Jag riktigt gillar matlagning", "en": "I quite like cooking"}, {"sv": "Det har spruckit upp", "en": "The sun has come out"}, {"sv": "Han har ett mycket litet rum", "en": "His room is very small"}, {"sv": "Jag jobbar mycket", "en": "I work a lot"}, {"sv": "Den saknar kreativitet", "en": "It lacks creativity"}, {"sv": "Känn dig som hemma", "en": "Make yourself at home"}, {"sv": "Kan jag hjälpa till på något sätt?", "en": "Is there anything I can do to help?"}, {"sv": "Jag har glömt lösenordet", "en": "I forgot the password"}, {"sv": "Hur är affärerna?", "en": "How is business?"}, {"sv": "Jag bryr mig inte", "en": "I don't care"}, {"sv": "Var studerar du?", "en": "Where do you study?"}, {"sv": "Jag gick till affären", "en": "I went to the supermarket"}, {"sv": "Låt oss laga mat tillsammans", "en": "Let us cook together"}, {"sv": "När ska vi gå?", "en": "When shall we go?"}, {"sv": "Varsågod", "en": "You're welcome"}, {"sv": "Jag får inte bli störd", "en": "I can't be bothered"}, {"sv": "Hon kommer med mig i morgon", "en": "She's going with me tomorrow"}, {"sv": "Jag bodde i Kanada i sex månader", "en": "I lived in Canada for six months"}, {"sv": "Han reagerade omoget", "en": "His reaction was immature"}, {"sv": "Hon är för smal", "en": "She is too skinny"}, {"sv": "Det beror på vädret", "en": "It depends on the weather"}, {"sv": "Har du tagit körkort?", "en": "Have you passed your driving test?"}, {"sv": "Det är en dokusåpa", "en": "It is a reality show"}, {"sv": "Jag tycker den är mycket bra", "en": "I think it's very good"}, {"sv": "Filmen var nedslående", "en": "The movie was depressing"}, {"sv": "Jag förväntar mig...", "en": "I expect..."}, {"sv": "Jag arbetar med datorer", "en": "I work with computers"}, {"sv": "Katten är under bordet", "en": "The cat is under the table"}, {"sv": "Vill du ha något att dricka?", "en": "Would you like a drink?"}, {"sv": "Jag såg det hända", "en": "I watched it happen"}, {"sv": "Det är en bra skola", "en": "That is a good school"}, {"sv": "Var är närmaste restaurang?", "en": "Where's the nearest restaurant?"}, {"sv": "Jag gör volontärarbete", "en": "I do voluntary work"}, {"sv": "Jag tvivlar på det", "en": "I doubt it"}, {"sv": "Bilen har lagats", "en": "The car has been fixed"}, {"sv": "Vi ses senare", "en": "See you later"}, {"sv": "Den är en statussymbol", "en": "It is a status symbol"}, {"sv": "Vår tur har vänt", "en": "We are running out of luck"}, {"sv": "Jag är ledsen, jag vet inte", "en": "I'm sorry, I don't know"}, {"sv": "Jag är för trött", "en": "I'm too tired"}, {"sv": "Så mycket som möjligt", "en": "As much as possible"}, {"sv": "Jag är en protestant", "en": "I'm a Protestant"}, {"sv": "Var inte hård", "en": "Do not be harsh"}, {"sv": "Jag studerar historia", "en": "I'm studying history"}, {"sv": "Jag tycker att du är mycket attraktiv", "en": "I find you very attractive"}, {"sv": "Den är korrekt", "en": "That is correct"}, {"sv": "Den var härlig", "en": "That was lovely"}, {"sv": "Jag bor med min partner", "en": "I live with my partner"}, {"sv": "Jag arbetar inom förlagsbranschen", "en": "I work in publishing"}, {"sv": "Jag är i ett komplicerat förhållande", "en": "I am in a complicated relationship"}, {"sv": "Jobbar du idag?", "en": "Are you working today?"}, {"sv": "Vilken typ av musik gillar du?", "en": "What kind of music do you like?"}, {"sv": "Ring mig är du snäll", "en": "Please call me"}, {"sv": "Det följande året", "en": "The following year"}, {"sv": "Jag är en änka", "en": "I'm a widower"}, {"sv": "Jag är en man med god smak", "en": "I am a man of good taste"}, {"sv": "Jag tycker jättemycket om dig", "en": "I like you a lot"}, {"sv": "Jag hoppas inte det", "en": "I hope not"}, {"sv": "Stämningen var elektrisk", "en": "The atmosphere was electrifying"}, {"sv": "Vad kostar det?", "en": "What is the fee?"}, {"sv": "Jag trodde att han sa något annat", "en": "I thought he said something else"}, {"sv": "Jag behöver ditt stöd", "en": "I need your support"}, {"sv": "Igår eftermiddag", "en": "Yesterday afternoon"}, {"sv": "Det här är min son", "en": "This is my son"}, {"sv": "Vad gör dina föräldrar?", "en": "What do your parents do?"}, {"sv": "Jag är desperat", "en": "I am desperate"}, {"sv": "Jag skulle vilja ha ett rum", "en": "I'd like a room"}, {"sv": "Jag ångrar inget", "en": "I have no regrets"}, {"sv": "Nästa år", "en": "Next year"}, {"sv": "Det är allt", "en": "That's it"}, {"sv": "Är det möjligt?", "en": "Is it possible?"}, {"sv": "Han tycker mycket om den", "en": "He likes it very much"}, {"sv": "Jag studerar en hel del", "en": "I am studying a lot"}, {"sv": "Jag har redan betalt", "en": "I have already paid"}, {"sv": "Om ett år", "en": "About a year"}, {"sv": "Var möts vi?", "en": "Where are we meeting?"}, {"sv": "Det var farligt", "en": "That was dangerous"}, {"sv": "Jag är i affären", "en": "I'm at the shop"}, {"sv": "Jag är arbetslös", "en": "I'm out of work"}, {"sv": "God eftermiddag", "en": "Good afternoon"}, {"sv": "Lugna ner dig", "en": "Calm down"}, {"sv": "Räck mig min tröja är du snäll", "en": "Bring me my shirt please"}, {"sv": "Jag är glad", "en": "I am happy"}, {"sv": "Vi ses imorgon", "en": "See you tomorrow"}, {"sv": "Kan du simma?", "en": "Can you swim?"}, {"sv": "Kasta iväg den", "en": "Throw it away"}, {"sv": "Jag förstår inte", "en": "I don't understand"}, {"sv": "Det ser ut som regn", "en": "It looks like rain"}, {"sv": "Har du gått på universitetet?", "en": "Did you go to university?"}, {"sv": "Jag också", "en": "Me too"}, {"sv": "Jag gjorde ett misstag", "en": "I made a mistake"}, {"sv": "Han är mycket atletisk", "en": "He is very athletic"}, {"sv": "Skynda dig!", "en": "Hurry up!"}, {"sv": "Är allting okej?", "en": "Is everything OK?"}, {"sv": "Vi behöver biljetter", "en": "We need tickets"}, {"sv": "Gå över bron", "en": "Go over the bridge"}, {"sv": "Det här är min vän", "en": "This is my friend"}, {"sv": "Jag önskar dig en trevlig resa", "en": "I wish you a nice trip"}, {"sv": "Den kommer att ligga till höger", "en": "It will be on your right"}, {"sv": "Det är dags att gå", "en": "It is time to go"}, {"sv": "Jag besöker släktingar", "en": "I'm visiting relatives"}, {"sv": "Den är besvärlig", "en": "It is inconvenient"}, {"sv": "Allt är klart", "en": "Everything is ready"}, {"sv": "Jag är en buddhistisk", "en": "I'm a Buddhist"}, {"sv": "Jag skulle vilja hyra en bil", "en": "I'd like to hire a car"}, {"sv": "Vad är det?", "en": "What is it?"}, {"sv": "Hon är otrogen", "en": "She is a cheat"}, {"sv": "Vilken tid lade du dig?", "en": "What time did you go to sleep?"}, {"sv": "Det är ganska lång väg till fots", "en": "It's quite long way on foot"}, {"sv": "Jag skulle ha kommit", "en": "I would have come"}, {"sv": "Jag behöver din tillåtelse", "en": "I need your permission"}, {"sv": "Den där var utmärkt", "en": "That was excellent"}, {"sv": "Det var spännande", "en": "It was thrilling"}, {"sv": "Hur vet du?", "en": "How do you know?"}, {"sv": "Det var ett missförstånd", "en": "It was a misunderstanding"}, {"sv": "Det är fascinerande", "en": "It is fascinating"}, {"sv": "Jag behöver vara framme imorgon", "en": "I need to get there by tomorrow"}, {"sv": "Jag gör praktik", "en": "I'm doing an internship"}, {"sv": "Om en vecka", "en": "In a week's time"}, {"sv": "Den är där", "en": "It's there"}, {"sv": "Vad händer?", "en": "What is going on?"}, {"sv": "Detta är min mamma", "en": "This is my mother"}, {"sv": "Stolen är bekväm", "en": "The chair is comfortable"}, {"sv": "Jag studerar ekonomi", "en": "I'm studying economics"}, {"sv": "Jag kliade mig själv", "en": "I scratched myself"}, {"sv": "Gjorde det ont?", "en": "Did it hurt?"}, {"sv": "Jag studerar för att bli sjuksköterska", "en": "I'm training to be a nurse"}, {"sv": "Vilken tid anländer de?", "en": "What time are they arriving?"}, {"sv": "Jag har tappat mina nycklar", "en": "I lost my keys"}, {"sv": "Har ni något emot att jag går med er?", "en": "Do you mind if I join you?"}, {"sv": "Det är fel", "en": "That is incorrect"}, {"sv": "Jag ringer er när jag lämnar", "en": "I'll call you when I leave"}, {"sv": "Jag vill komma i kontakt med vår", "en": "ambassad"}, {"sv": "Vem arbetar ni för?", "en": "Who do you work for?"}, {"sv": "Jag tycker att den smakar bra", "en": "I think it tastes good"}, {"sv": "Jag är här för affärer", "en": "I'm here on business"}, {"sv": "Jag tar notan", "en": "I'll pay for dinner"}, {"sv": "Han avgick", "en": "He resigned"}, {"sv": "Solen skiner", "en": "The sun is shining"}, {"sv": "Jag är skyldig", "en": "I am guilty"}, {"sv": "Jag arbetar på restaurang", "en": "I work in a restaurant"}, {"sv": "Vad är det för risk?", "en": "What is the risk?"}, {"sv": "Vad arbetar er mor med?", "en": "What does your mother do?"}, {"sv": "Ni hade rätt", "en": "You were right"}, {"sv": "Om tio dagar", "en": "In ten days"}, {"sv": "Vad innehåller väskan?", "en": "What is in the bag?"}, {"sv": "Har ni några mynt?", "en": "Do you have any coins?"}, {"sv": "Ni har fel", "en": "You are wrong"}, {"sv": "Jag är på jobbet", "en": "I'm at work"}, {"sv": "Hur var filmen?", "en": "How was the movie?"}, {"sv": "Jag är oerhört motiverad", "en": "I am very motivated"}, {"sv": "Hur långt är det?", "en": "How far is it?"}, {"sv": "Tack", "en": "Thank you"}, {"sv": "Jag har inget dåligt samvete", "en": "I do not have a guilty conscience"}, {"sv": "Från vilket datum?", "en": "From what date?"}, {"sv": "Var vänlig följ mig", "en": "Please follow me"}, {"sv": "Salen är tom", "en": "The hall is empty"}, {"sv": "Förstår ni mig?", "en": "Do you understand me?"}, {"sv": "Får jag lov?", "en": "May I?"}, {"sv": "Vilken dag är det idag?", "en": "What day is it today?"}, {"sv": "Det var intressant", "en": "That's interesting"}, {"sv": "Ni är så snäll", "en": "You are very kind"}, {"sv": "Jag behöver en inköpslista", "en": "I need a shopping-list"}, {"sv": "Det här är min dotter", "en": "This is my daughter"}, {"sv": "Vad är det där?", "en": "What is that?"}, {"sv": "Jag städar mitt rum", "en": "I'm tidying-up my room"}, {"sv": "Du är fantastisk", "en": "You are amazing"}, {"sv": "Hur känner ni varandra?", "en": "How do you know each other?"}, {"sv": "Jag hoppas att...", "en": "I hope that ..."}, {"sv": "Han är väldigt sofistikerad", "en": "He is very sophisticated"}, {"sv": "Jag kan inte göra det nu", "en": "I cannot do it now"}, {"sv": "Jag är hungrig", "en": "I'm hungry"}, {"sv": "Snälla hjälp mig", "en": "Please help me"}, {"sv": "Hans arbete är exceptionellt", "en": "His work is exceptional"}, {"sv": "Det regnade hårt idag", "en": "It rained hard today"}, {"sv": "Jag är kristen", "en": "I'm a Christian"}, {"sv": "Kan jag hjälpa dig?", "en": "Can I help you?"}, {"sv": "Oroa dig inte för det", "en": "Don't worry about it"}, {"sv": "Jag vill ge dig en present", "en": "I want to give you a gift"}, {"sv": "Jag hoppas det", "en": "I hope so"}, {"sv": "Han är en idealist", "en": "He is an idealist"}, {"sv": "Vill du ta en promenad?", "en": "Would you like to go for a walk?"}, {"sv": "Inte så bra", "en": "Not so well"}, {"sv": "Han är kreativ", "en": "He is creative"}, {"sv": "Jag gillar honom", "en": "I like him"}, {"sv": "Hur mår du?", "en": "How are you?"}, {"sv": "Min son studerar datorer", "en": "My son studies computers"}, {"sv": "Vi gillar den så mycket", "en": "We like it very much"}, {"sv": "Har du några bröder eller systrar?", "en": "Do you have any brothers or sisters?"}, {"sv": "Jag är mycket tillförlitlig", "en": "I am very reliable"}, {"sv": "Vi förlorade matchen", "en": "We lost the game"}, {"sv": "Hjälp!", "en": "Help!"}, {"sv": "Jag fick sparken", "en": "I got fired"}, {"sv": "Jag är rädd för att...", "en": "I'm afraid that ..."}, {"sv": "Hörde du det?", "en": "Did you hear that?"}, {"sv": "Vad tyckte du?", "en": "What did you think?"}, {"sv": "Skulle du vilja ha en öl?", "en": "Would you like a beer?"}, {"sv": "Han är kraftfull", "en": "He is powerful"}, {"sv": "De har ett gott rykte", "en": "They have a good reputation"}, {"sv": "Det är minusgrader", "en": "It's below freezing"}, {"sv": "Jag är sjuk", "en": "I am sick"}, {"sv": "Jag har skurit mig", "en": "I've cut myself"}, {"sv": "Jag är ledsen, vi har sålt slut", "en": "I'm sorry, we're sold out"}, {"sv": "Det är första gången som jag är här", "en": "This is the first time I've been here"}, {"sv": "I tre veckor", "en": "In three weeks' time"}, {"sv": "Låt oss börja", "en": "Let us begin"}, {"sv": "Vi är sena", "en": "We're late"}, {"sv": "Jag har tre barn", "en": "I have three children"}, {"sv": "Jag är flytande i engelska", "en": "I am fluent in English"}, {"sv": "Är det nära?", "en": "Is it close?"}, {"sv": "Gillar han skolan?", "en": "Does he like the school?"}, {"sv": "Vilket universitet studerar du vid?", "en": "Which university are you at?"}, {"sv": "Jag skulle vilja gå på en promenad", "en": "I'd like to go for a walk"}, {"sv": "Jag har en i min bil", "en": "I have one in my car"}, {"sv": "Det där är hennes bok", "en": "That's her book"}, {"sv": "Det är ett mirakel", "en": "It is a miracle"}, {"sv": "Jag gillar inte den här", "en": "I do not like this"}, {"sv": "Glöm det", "en": "Forget it"}, {"sv": "Jag ska gå och äta middag", "en": "I'm going to go have dinner"}, {"sv": "Jag har inte en flickvän", "en": "I don't have a girlfriend"}, {"sv": "Har du något emot att vi följer med", "en": "dig?"}, {"sv": "Vill du att jag ska sätta på TV:n?", "en": "Do you want me to put the TV on?"}, {"sv": "Ingen hjälper oss", "en": "Nobody is helping us"}, {"sv": "Kan du släcka lampan?", "en": "Can you switch the light off?"}, {"sv": "Vill du ha en pint?", "en": "Do you fancy a pint?"}, {"sv": "Prova den", "en": "Try it on"}, {"sv": "Jag är en Sikh", "en": "I'm a Sikh"}, {"sv": "Vad skulle du vilja dricka?", "en": "What would you like to drink?"}, {"sv": "Vill du ha något att äta?", "en": "Would you like something to eat?"}, {"sv": "Jobbar du imorgon?", "en": "Are you working Tomorrow?"}, {"sv": "Han är snabbare än mig", "en": "He's faster than me"}, {"sv": "Det är ganska långt", "en": "It's quite a long way"}, {"sv": "Verksamheten är lönsam", "en": "The business is profitable"}, {"sv": "Jag är bra med pengar", "en": "I am good with money"}, {"sv": "Inte mycket eller inte mycket", "en": "Not much or not a lot"}, {"sv": "Jag är entusiastisk", "en": "I am enthusiastic"}, {"sv": "Har du fått nog att äta?", "en": "Have you had enough to eat?"}, {"sv": "Stäng av radion", "en": "Please turn off the radio"}, {"sv": "Jag har inte tid just nu", "en": "I don't have time right now"}, {"sv": "Adjö", "en": "Goodbye"}, {"sv": "Vad är klockan?", "en": "What is the time?"}, {"sv": "Den är för söt", "en": "It is too sweet"}, {"sv": "Jag behöver en signatur", "en": "I need a signature"}, {"sv": "Jag blir lite sen", "en": "I'm running a little late"}, {"sv": "Vilken färg är den där bilen?", "en": "What color is that car?"}, {"sv": "Kan du påminna mig?", "en": "Will you remind me?"}, {"sv": "Jag är en änka", "en": "I'm a widow"}, {"sv": "Kan jag köpa en biljett på tåget?", "en": "Can I buy a ticket on the train?"}, {"sv": "Jag är inte gift", "en": "I am not married"}, {"sv": "Vad arbetar du med?", "en": "What do you do for a living?"}, {"sv": "Din åsikt är värdefull", "en": "Your opinion is valuable"}, {"sv": "Jag skulle vilja köpa en flaska vatten", "en": "I'd like to buy a bottle of water"}, {"sv": "Hur tar du den?", "en": "How do you take it?"}, {"sv": "Jag kommer att hämta dig", "en": "I'm coming to pick you up"}, {"sv": "Vad arbetar han med?", "en": "What does he do for work?"}, {"sv": "Den är alltför kryddig", "en": "It is too spicy"}, {"sv": "Jag är inte en turist", "en": "I am not a tourist"}, {"sv": "Jag läser mycket", "en": "I read a lot"}, {"sv": "Jag studerar ekonomi", "en": "I study economics"}, {"sv": "Jag mår bra", "en": "I feel good"}, {"sv": "Jag talar franska", "en": "I speak French"}, {"sv": "Hon är äldre än mig", "en": "She's older than me"}, {"sv": "Vädret är bra", "en": "The weather is fine"}, {"sv": "Vad är växelkursen?", "en": "What is the exchange rate?"}, {"sv": "Jag betalar", "en": "I'll pay"}, {"sv": "Han är en mycket duktig elev", "en": "He's a very good student"}, {"sv": "Det där var roligt", "en": "That's funny"}, {"sv": "Jag har bråttom", "en": "I'm in a hurry"}, {"sv": "Hur mår dina föräldrar?", "en": "How are your parents?"}, {"sv": "Jag är verkligen ledsen", "en": "I'm really sorry"}, {"sv": "Jag har en hel del saker att göra", "en": "I have a lot of things to do"}, {"sv": "Hur dags ska vi ses?", "en": "What time shall we meet?"}, {"sv": "Vi ses!", "en": "See you!"}, {"sv": "Han är pålitlig", "en": "He is trustworthy"}, {"sv": "Den var rolig", "en": "It was hilarious"}, {"sv": "Var har du rest från?", "en": "Where have you travelled from?"}, {"sv": "Inte alltför illa, tack", "en": "Not too bad, thanks"}, {"sv": "De antog inte mig", "en": "They did not accept me"}, {"sv": "Det kommer att vara kallt i kväll", "en": "It will be cold tonight"}, {"sv": "Jag har inte ätit klart", "en": "I haven't finished eating"}, {"sv": "Glöm inte", "en": "Don't forget"}, {"sv": "Detta är en tradition", "en": "This is a tradition"}, {"sv": "Och du då?", "en": "How about you?"}, {"sv": "Rummet var tyst", "en": "The room was silent"}, {"sv": "Hur gamla är de?", "en": "How old are they?"}, {"sv": "Var inte dum", "en": "Do not be silly"}, {"sv": "På så vis", "en": "That way"}, {"sv": "Var skulle du vilja mötas?", "en": "Where would you like to meet?"}, {"sv": "Hans blick kan vara väldigt intensiv", "en": "His look can be very intense"}, {"sv": "Jag älskar att gå ut", "en": "I love going out"}, {"sv": "Jag är ok, tack", "en": "I'm OK, thanks"}, {"sv": "Vad sa han?", "en": "What did he say?"}, {"sv": "Den var utom kontroll", "en": "It was out of control"}, {"sv": "Jag är inte säker", "en": "I'm not sure"}, {"sv": "Jag behöver bevis", "en": "I need proof"}, {"sv": "Lunchen är klar", "en": "Lunch is ready"}, {"sv": "Snälla, vänta på mig", "en": "Please wait for me"}, {"sv": "Det är ok", "en": "It's ok"}, {"sv": "Vilken tid anländer vi?", "en": "What time do we arrive?"}, {"sv": "Jag har gått vilse", "en": "I'm lost"}, {"sv": "Ett par månader", "en": "A few months"}, {"sv": "Jag har sett den", "en": "I've seen it"}, {"sv": "Säg sanningen", "en": "Tell the truth"}, {"sv": "Var betalar jag?", "en": "Where do i pay"}, {"sv": "Vart ska vi gå?", "en": "Where should we go?"}, {"sv": "Är du ledig ikväll?", "en": "Are you free tonight?"}, {"sv": "Vad gör du?", "en": "What do you do?"}, {"sv": "Vad blir det till lunch?", "en": "What is for lunch?"}, {"sv": "Ta denna väg", "en": "Take this road"}, {"sv": "Vi spelade fotboll", "en": "We played football"}, {"sv": "Vill du komma med oss?", "en": "Would you like to join us?"}, {"sv": "Var ligger försäljningskontoret?", "en": "Where's the sales office?"}, {"sv": "Jag vill ställa dig en fråga", "en": "I want to ask you a question"}, {"sv": "Jag gillar dig", "en": "I like you"}, {"sv": "Jag är en akademiker", "en": "I am an academic"}, {"sv": "Det är upprörande", "en": "That is upsetting"}, {"sv": "Jag behöver tvätta händerna", "en": "I need to wash hands"}, {"sv": "Vill du ha något att dricka?", "en": "Would you like something to drink?"}, {"sv": "Varför skrattar du?", "en": "Why are you laughing?"}, {"sv": "Maten var utsökt", "en": "The food was delicious"}, {"sv": "Får jag tala med [namn] tack?", "en": "May I speak to [name] please?"}, {"sv": "Den är min", "en": "It's mine"}, {"sv": "Igår kväll", "en": "Yesterday evening"}, {"sv": "Var är manualen?", "en": "Where is the manual?"}, {"sv": "Jag är engagerad", "en": "I am committed"}, {"sv": "Jag gillar verkligen att dansa", "en": "I really like dancing"}, {"sv": "Lämna mig ifred", "en": "Please leave me alone"}, {"sv": "Du har valts", "en": "You have been selected"}, {"sv": "Jag tar ett sabbatsår", "en": "I'm taking a gap year"}, {"sv": "Var är närmaste bensinstation?", "en": "Where's the nearest petrol station?"}, {"sv": "Var är dina barn?", "en": "Where are your children?"}, {"sv": "Jag tror inte det", "en": "I don't think so"}, {"sv": "Den är omöjlig", "en": "It is impossible"}, {"sv": "Nästa gång", "en": "Next time"}, {"sv": "Du är smart", "en": "You are clever"}, {"sv": "Jag är ledsen", "en": "I'm sorry"}, {"sv": "Ingen kommentar", "en": "No comment"}, {"sv": "Jag kommer just nu", "en": "I'm coming right now"}, {"sv": "Hur mycket kostar det?", "en": "How much will it cost?"}, {"sv": "Jag behöver en till nyckel", "en": "I need another key"}, {"sv": "Jag kommer att vara där om fem", "en": "minuter"}, {"sv": "Vad säger det oss?", "en": "What does that tell us?"}, {"sv": "Jag är katolik", "en": "I'm Catholic"}, {"sv": "Är det okej att jag sitter här?", "en": "Do you mind if I sit here?"}, {"sv": "Jag studerar medicin", "en": "I am studying medicine"}, {"sv": "Var inte slösaktig", "en": "Do not be wasteful"}, {"sv": "Har du barnbarn?", "en": "Do you have grandchildren?"}, {"sv": "Beslutet är slutgiltigt", "en": "The decision is final"}, {"sv": "De har inte träffat honom ännu", "en": "They haven't met him yet"}, {"sv": "Pengar motiverar mig inte", "en": "Money does not motivate me"}, {"sv": "Han tror att vi inte vill gå", "en": "He thinks we don't want to go"}, {"sv": "Han är mycket övertygande", "en": "He is very convincing"}, {"sv": "Jag bakade denna kaka", "en": "I baked this cake"}, {"sv": "Vad kan jag hjälpa dig med?", "en": "What can I do for you?"}, {"sv": "Jag vägrar", "en": "I refuse to"}, {"sv": "Är det långt?", "en": "Is it far?"}, {"sv": "Hur gammal är han?", "en": "How old is he?"}, {"sv": "Är du en student?", "en": "Are you a student?"}, {"sv": "Har du några barn?", "en": "Have you got any kids?"}, {"sv": "Jag ville inte studera på", "en": "universitetet"}, {"sv": "Jag räknar med dig", "en": "I am counting on you"}, {"sv": "Den var enkel", "en": "It was easy"}, {"sv": "Den är inte långt härifrån", "en": "It is not far from here"}, {"sv": "Vad är problemet?", "en": "What is the problem?"}, {"sv": "Den ger upphov till alldeles för", "en": "mycket avfall"}, {"sv": "Vad har du?", "en": "What do you have?"}, {"sv": "Kan du ringa på en taxi åt mig?", "en": "Could you please call me a taxi?"}, {"sv": "Hennes kläder är mycket moderna", "en": "Her clothes are very modern"}, {"sv": "Var är vi nu?", "en": "Where are we now?"}, {"sv": "Drygt två år", "en": "Just over two years"}, {"sv": "Jag är beslutsam", "en": "I am determined"}, {"sv": "Vid vilken universitet studerar du?", "en": "At which university do you study?"}, {"sv": "Är du själv?", "en": "Are you on your own?"}, {"sv": "Jag går en kurs för närvrande", "en": "I am doing a course at the moment"}, {"sv": "Hon är så vänlig", "en": "She is so friendly"}, {"sv": "Så snart som möjligt", "en": "As soon as possible"}, {"sv": "Vems fel är det?", "en": "Who is to blame?"}, {"sv": "Jag gillar att lyssna på musik", "en": "I like listening to music"}, {"sv": "Vilken fin dag!", "en": "What a nice day!"}, {"sv": "Du är väldigt snäll", "en": "You are very kind"}, {"sv": "Vad är syftet?", "en": "What is the objective?"}, {"sv": "Hur länge har du varit i Amerika?", "en": "How long have you been in"}, {"sv": "Jag förlorade mitt jobb", "en": "I lost my job"}, {"sv": "Du fick mig att gråta", "en": "You made me cry"}, {"sv": "Hade du en bra resa?", "en": "Did you have a good journey?"}, {"sv": "Han undervisar på...", "en": "He teaches at..."}, {"sv": "Den är långt härifrån", "en": "It's far from here"}, {"sv": "Jag ringer tillbaka senare", "en": "I'll call back later"}, {"sv": "Jag håller med", "en": "I agree"}, {"sv": "Hur lång är den?", "en": "How long is it?"}, {"sv": "Jag tycker inte om honom", "en": "I don't like him"}, {"sv": "Jag tycker inte om henne", "en": "I don't like her"}, {"sv": "Vad kostar den?", "en": "How much is it?"}, {"sv": "Det väntas bli regn", "en": "It's forecast to rain"}, {"sv": "Hur betalar du?", "en": "How are you paying?"}, {"sv": "Du slösar bort din tid", "en": "You are wasting your time"}, {"sv": "Var inte så negativ", "en": "Do not be negative"}, {"sv": "Har du avslutat sina studier?", "en": "Have you finished studying?"}, {"sv": "Vill du ha en snabb drink?", "en": "Do you fancy a quick drink?"}, {"sv": "Är ditt hus som detta?", "en": "Is your house like this one?"}, {"sv": "Ser du någon?", "en": "Are you seeing anyone?"}, {"sv": "Jag är en drömmare", "en": "I am a dreamer"}, {"sv": "Ja, jag förstod", "en": "Yes, I understood"}, {"sv": "Var inte dum", "en": "Do not be stupid"}, {"sv": "Hur kan det vara så?", "en": "How can that be?"}, {"sv": "Jag har arbetat i fem år", "en": "I've worked there for five years"}, {"sv": "Imorgon kväll", "en": "Tomorrow night"}, {"sv": "Jag har ett heltidsarbete", "en": "I've got a full-time job"}, {"sv": "Han är i köket", "en": "He's in the kitchen"}, {"sv": "Festen har ställts in", "en": "The party has been cancelled"}, {"sv": "Jag är chockad", "en": "I am shocked"}, {"sv": "Ta detta läkemedel", "en": "Take this medicine"}, {"sv": "Jag kommer inte göra dig besviken", "en": "I wont let you down"}, {"sv": "Han vände sig om", "en": "He turned around"}, {"sv": "Varför sa du det?", "en": "Why did you say that?"}, {"sv": "Jag känner mig ensam", "en": "I feel lonely"}, {"sv": "Jag är förkyld", "en": "I have a cold"}, {"sv": "Jag håller inte med", "en": "I disagree"}, {"sv": "Jag är tvåspråkig", "en": "I am bilingual"}, {"sv": "Här är den", "en": "Here it is"}, {"sv": "Jag arbetar på ett call center", "en": "I work in a call centre"}, {"sv": "Vilken tid öppnar butiken?", "en": "What time does the store open?"}, {"sv": "Vem står näst på tur?", "en": "Who's next?"}, {"sv": "Har du dina barn med dig?", "en": "Are your children with you?"}, {"sv": "Vilket lag hejar du på?", "en": "Which team do you support?"}, {"sv": "Två veckor sedan", "en": "Two weeks ago"}, {"sv": "Jag skulle vilja betala min nota", "en": "I'd like to pay my bill"}, {"sv": "Han kommer snart", "en": "He's coming soon"}, {"sv": "Jag tappade min klocka", "en": "I lost my watch"}, {"sv": "Hon är mycket elegant", "en": "She is very elegant"}, {"sv": "Du har väldigt stort tålamod", "en": "You are very patient"}, {"sv": "Jag var på biblioteket", "en": "I was in the library"}, {"sv": "Min familj var fattig", "en": "My family was poor"}, {"sv": "Jag vill checka ut", "en": "I'd like to check out"}, {"sv": "Tack för en härlig kväll", "en": "Thanks for a lovely evening"}, {"sv": "Vad arbetar din far med?", "en": "What does your father do for work?"}, {"sv": "Jag gillar risk", "en": "I like risk"}, {"sv": "Var bor dina föräldrar?", "en": "Where do your parents live?"}, {"sv": "Nej, detta är första gången", "en": "No, this is the first time"}, {"sv": "Jag gillar den", "en": "I like it"}, {"sv": "Jag måste gå nu", "en": "I need to go now"}, {"sv": "Jag ska till Amerika nästa år", "en": "I'm going to America next year"}, {"sv": "Hon grät", "en": "She cried"}, {"sv": "Gör det på rätt sätt", "en": "Do it properly"}, {"sv": "Tåget är försenat", "en": "The train is running late"}, {"sv": "Det var synd", "en": "That's too bad"}, {"sv": "Hur stavar man det?", "en": "How do you spell it?"}, {"sv": "Var försiktig", "en": "Be careful"}, {"sv": "Detta är mycket svårt", "en": "This is very difficult"}, {"sv": "Vad är adressen?", "en": "What is the address?"}, {"sv": "Förra veckan", "en": "Last week"}, {"sv": "Jag dricker vanligtvis kaffe", "en": "I usually drink coffee"}, {"sv": "Försök att uttala det", "en": "Try to pronounce it"}, {"sv": "Du är för Formalt klädd", "en": "You are dressed too formal"}, {"sv": "Kan jag köra dig hem?", "en": "Can I drive you home?"}, {"sv": "Jag arbetar inom IT", "en": "I work in IT"}, {"sv": "Om tio år", "en": "In ten years' time"}, {"sv": "Den är extremt varm", "en": "It is extremely hot"}, {"sv": "Var jobbar du?", "en": "Where do you work?"}, {"sv": "Jag är så skuldsatt", "en": "I have so much debt"}, {"sv": "Jag är nästan färdig", "en": "I am nearly finished"}, {"sv": "Får jag bjuda på en drink?", "en": "May I buy you a drink?"}, {"sv": "Jag vill bara ha ett mellanmål", "en": "I only want a snack"}, {"sv": "Jag är allergisk", "en": "I am allergic"}, {"sv": "Hon är i fara", "en": "She is in danger"}, {"sv": "Jag har tappat min biljett", "en": "I've lost my ticket"}, {"sv": "Den ser udda ut", "en": "That looks odd"}, {"sv": "Jag är japan", "en": "I am Japanese"}, {"sv": "Han ljög", "en": "He told a lie"}, {"sv": "Ha en bra resa!", "en": "Have a good journey!"}, {"sv": "Jag har en plan", "en": "I have a plan"}, {"sv": "Jag lär mig spela piano", "en": "I'm learning to play the piano"}, {"sv": "Är det här din bok?", "en": "Is this your book?"}, {"sv": "God morgon", "en": "Good morning"}, {"sv": "Jag fick underkänt på provet", "en": "I failed the exam"}, {"sv": "Jag är i stan", "en": "I'm in town"}, {"sv": "Hur ska jag svara?", "en": "How should I respond?"}, {"sv": "Hur lång tid tar resan?", "en": "How long does the journey take?"}, {"sv": "Jag skulle vilja ringa ett samtal", "en": "I'd like to make a phone call"}, {"sv": "Jag har en punktering", "en": "I've got a flat tyre"}, {"sv": "Det är norr om här", "en": "It's north of here"}, {"sv": "Det är okej", "en": "That's alright"}, {"sv": "Vi gick i skolan ihop", "en": "We were at school together"}, {"sv": "Jag älskar poesi", "en": "I love poetry"}, {"sv": "Drick inte alkohol innan du kör bil", "en": "Do not drink and drive"}, {"sv": "Förlåt, det var mitt fel", "en": "Sorry, it was my fault"}, {"sv": "Är den här platsen upptagen?", "en": "Is this seat taken?"}, {"sv": "Den ser bra ut", "en": "That looks great"}, {"sv": "Jag måste avboka vårt möte", "en": "I need to cancel the appointment"}, {"sv": "Jag studerar en masterexamen i", "en": "juridik"}, {"sv": "Jag ångrar den", "en": "I regret that"}, {"sv": "Det var ett konstruktivt samtal", "en": "It was a constructive conversation"}, {"sv": "I morgon är det tisdag", "en": "Tomorrow is Tuesday"}, {"sv": "Jag gick aldrig på universitetet", "en": "I never went to university"}, {"sv": "God dag", "en": "Good day"}, {"sv": "Hon är en expert", "en": "She is an expert"}, {"sv": "Jag arbetar hemifrån", "en": "I work from home"}, {"sv": "Jag måste gå till postkontoret", "en": "I have to go to the post office"}, {"sv": "Hur länge har du bott här?", "en": "How long have you lived here?"}, {"sv": "Varför är du ledsen?", "en": "Why are you sad?"}, {"sv": "Vad står det?", "en": "What is the score?"}, {"sv": "Ge den ett försök", "en": "Give it a try"}, {"sv": "Hur länge måste jag vänta?", "en": "How long will I have to wait?"}, {"sv": "Önska dig något", "en": "Make a wish"}, {"sv": "Jag skulle vilja köpa något", "en": "I would like to buy something"}, {"sv": "Vi kommer att talas vid snart", "en": "We will talk soon"}, {"sv": "Du är mycket omtänksam", "en": "You are very thoughtful"}, {"sv": "Han har rätt", "en": "He's right"}, {"sv": "Jag är mätt", "en": "I'm full"}, {"sv": "Vill du ha mer?", "en": "Would you like some more?"}, {"sv": "Hans son...", "en": "His son..."}, {"sv": "Den kommer att anlända inom", "en": "kort"}, {"sv": "Vem är det som ringer?", "en": "Who's calling?"}, {"sv": "Jag skulle vilja gå till affären", "en": "I'd like to go to the store"}, {"sv": "Är din man också ifrån...?", "en": "Is your husband also from...?"}, {"sv": "Den var utsökt", "en": "That was delicious"}, {"sv": "Vi separerade nyligen", "en": "We recently separated"}, {"sv": "Jag behöver få åtkomst till nätet", "en": "I need to get online"}, {"sv": "Jag är en läkare", "en": "I'm a doctor"}, {"sv": "Jag skulle vilja stanna", "en": "I would like to stay"}, {"sv": "Det kommer att snöa idag", "en": "It's going to snow today"}, {"sv": "Vad är det?", "en": "What is the matter?"}, {"sv": "Snälla sakta ned", "en": "Please slow down"}, {"sv": "Jag gick upp i vikt", "en": "I gained in weight"}, {"sv": "Vad heter de?", "en": "What are their names?"}, {"sv": "Trevligt att se dig!", "en": "Good to see you!"}, {"sv": "Jag har ont i magen", "en": "My stomach hurts"}, {"sv": "Han körde för fort", "en": "He drove too fast"}, {"sv": "Är den okej?", "en": "Is that ok?"}, {"sv": "Detta är min pojkvän", "en": "This is my boyfriend"}, {"sv": "Hur uttalar man det?", "en": "How do you pronounce that?"}, {"sv": "Vad vill du ha till frukost?", "en": "What would you like for breakfast?"}, {"sv": "Kan du hjälpa mig?", "en": "Can you help me?"}, {"sv": "Det var ett ömsesidigt uppbrott", "en": "It was a mutual break-up"}, {"sv": "Jag tänker inte gå", "en": "I'm not going"}, {"sv": "Bra idé", "en": "Good idea"}, {"sv": "Vi arbetar tillsammans", "en": "We work together"}, {"sv": "Hon är mycket skarp", "en": "She has a sharp mind"}, {"sv": "Jag ringer dig", "en": "I'll call you"}, {"sv": "Havet är ganska lugnt", "en": "The sea is quite calm"}, {"sv": "Jag är gift", "en": "I am married"}, {"sv": "Lösningen var enkel", "en": "The solution was simple"}, {"sv": "Jag är allergisk mot fisk och skaldjur", "en": "I'm allergic to seafood"}, {"sv": "Var bor du?", "en": "Where will you be staying?"}, {"sv": "Jag fryser", "en": "I'm cold"}, {"sv": "Kasta bort den", "en": "Throw it away"}, {"sv": "Jag arbetar för rådet", "en": "I work for the council"}, {"sv": "Släpp igenom mig är du snäll", "en": "Please let me through"}, {"sv": "Du går åt fel håll", "en": "You're going the wrong way"}, {"sv": "Hon är väldigt engagerad", "en": "He is very dedicated"}, {"sv": "Vad är meningen?", "en": "What is the point?"}, {"sv": "Den där är för dyr", "en": "That's too expensive"}, {"sv": "Vilken tid börjar filmen?", "en": "What time does the movie start?"}, {"sv": "Självklart", "en": "Of course"}, {"sv": "Har du varit här förut?", "en": "Have you been here before?"}, {"sv": "Jag arbetar väldigt hårt", "en": "I am very hardworking"}, {"sv": "Jag hatar fotboll", "en": "I hate football"}, {"sv": "Jag skulle vilja gå och handla", "en": "I'd like to go shopping"}, {"sv": "Vilket universitet gick du på?", "en": "Where did you go to university?"}, {"sv": "Jag har fortfarande inte bestämt mig", "en": "I still haven't decided"}, {"sv": "Den kunde ha varit värre", "en": "It could be worse"}, {"sv": "Jag gick i skolan i [plats]", "en": "I went to school in [location]"}, {"sv": "Den ser gammal ut", "en": "That looks old"}, {"sv": "Öka trycket", "en": "Increase the pressure"}, {"sv": "Låt oss byta ämne", "en": "Let us change the subject"}, {"sv": "Jag tittar bara", "en": "I am just looking"}, {"sv": "Behöver den batterier?", "en": "Does it need batteries?"}, {"sv": "Det är för mycket", "en": "That's too much"}, {"sv": "Jag går ut", "en": "I'm going out"}, {"sv": "Jag behöver lite hjälp", "en": "I need some help"}, {"sv": "Har du gjort det här förut?", "en": "Have you done this before?"}, {"sv": "Jag tar ett glas vatten", "en": "I'll have a glass of water"}, {"sv": "Vad har hänt?", "en": "What has happened?"}, {"sv": "Han har en dålig attityd", "en": "He has a bad attitude"}, {"sv": "Jag har precis anlänt", "en": "I've only just arrived"}, {"sv": "Vad letar du efter?", "en": "What are you looking for?"}, {"sv": "Jag letar efter den här adressen", "en": "I'm looking for this address"}, {"sv": "Jag skulle vilja använda internet", "en": "I'd like to use the internet"}, {"sv": "Accepterar du [valuta]?", "en": "Do you accept [currency]?"}, {"sv": "Min far har varit där", "en": "My father has been there"}, {"sv": "Den var mycket inspirerande", "en": "That was very inspiring"}, {"sv": "Det är din tur", "en": "It is your turn"}, {"sv": "Vem är det?", "en": "Who is that?"}, {"sv": "Nu eller senare?", "en": "Now or later?"}, {"sv": "Jag är butikschef på en stormarknad", "en": "I'm a supermarket manager"}, {"sv": "Kom in", "en": "Please come in"}, {"sv": "Nej tack", "en": "No, thank you"}, {"sv": "Jag är arbetslös", "en": "I'm unemployed"}, {"sv": "Jag försöker hitta ett arbete", "en": "I am trying to find work"}, {"sv": "Var tyst", "en": "Be quiet"}, {"sv": "Jag gillar att titta på TV", "en": "I like to watch TV"}, {"sv": "Låt mig kolla", "en": "Let me check"}, {"sv": "Det är inte sant", "en": "That's not true"}, {"sv": "Den är inte riktigt nära", "en": "It's not quite close"}, {"sv": "Jag blir kär så lätt", "en": "I fall in love easily"}, {"sv": "Jag behöver gå hem", "en": "I need to go home"}, {"sv": "Behöver jag visum?", "en": "Do I need a visa?"}, {"sv": "De kom igår", "en": "They arrived yesterday"}, {"sv": "Jag tror att...", "en": "I think that ..."}, {"sv": "Dagen innan", "en": "The previous day"}, {"sv": "Kan du visa mig?", "en": "Can you show me?"}, {"sv": "Hur är vädret?", "en": "How is the weather?"}, {"sv": "Jag har varit där", "en": "I've been there"}, {"sv": "Jag önskar att jag hade...", "en": "I wish I had..."}, {"sv": "Jag är glad att höra det", "en": "I am glad to hear it"}, {"sv": "Det är galet", "en": "That is crazy"}, {"sv": "Jag behöver ett möte", "en": "I need an appointment"}, {"sv": "Jag arbetar inte för närvarande", "en": "I'm not working at the moment"}, {"sv": "Verkar det vettigt?", "en": "Does it make sense?"}, {"sv": "Jag behöver byta kläder", "en": "I need to change clothes"}, {"sv": "Jag klarade det nästan", "en": "I nearly made it"}, {"sv": "Vi är pensionärer", "en": "We are retired"}, {"sv": "Jag är inte intresserad av fotboll", "en": "I'm not interested in football"}, {"sv": "Mer än så", "en": "More than that"}, {"sv": "Jag är galen i dig", "en": "I'm crazy about you"}, {"sv": "Jag är full av energi", "en": "I am full of energy"}, {"sv": "Snälla skynda dig!", "en": "Please hurry!"}, {"sv": "Jag är väldigt nyfiken", "en": "I am very curious"}, {"sv": "Han är aggressiv", "en": "He is agressive"}, {"sv": "Fungerar det?", "en": "Does it work?"}, {"sv": "Lite", "en": "A little"}, {"sv": "Frukosten är klar", "en": "Breakfast is ready"}, {"sv": "Det här är min fru", "en": "This is my wife"}, {"sv": "Jag är också oroad", "en": "I'm worried too"}, {"sv": "Hur gammal är ni?", "en": "How old are you?"}, {"sv": "För fem minuter sedan", "en": "Five minutes ago"}, {"sv": "På eftermiddagen", "en": "In the afternoon"}, {"sv": "Har ni något annat?", "en": "Do you have anything else?"}, {"sv": "Vad blir det till efterrätt?", "en": "What is for dessert?"}, {"sv": "Känn er inte avskräckt", "en": "Do not feel intimidated"}, {"sv": "Jag älskar era ögon", "en": "I love your eyes"}, {"sv": "Skulle ni kunna upprepa det?", "en": "Can you repeat that please?"}, {"sv": "Det är okej", "en": "That's fine"}, {"sv": "Jag är inte gift", "en": "I'm not married"}, {"sv": "Var bor ni?", "en": "Where do you live?"}, {"sv": "Jag behöver studera", "en": "I need to study"}, {"sv": "Hur länge har ni varit här?", "en": "How long have you been here?"}, {"sv": "Den är väldigt behändig", "en": "It is very convenient"}, {"sv": "Det är inte en särskilt trevlig dag", "en": "It's not a very nice day"}, {"sv": "Jag är utmattad", "en": "I'm exhausted"}, {"sv": "Vad betyder den här?", "en": "What does this mean?"}, {"sv": "Var kommer ni ifrån?", "en": "Where are you from?"}, {"sv": "I övermorgon", "en": "The day after tomorrow"}, {"sv": "Finns det någon affär i närheten?", "en": "Is there a store near here?"}, {"sv": "Imorgon bitti", "en": "Tomorrow morning"}, {"sv": "Slut skylla på andra", "en": "Stop blaming others"}, {"sv": "Den går ut imorgon", "en": "It expires tomorrow"}, {"sv": "Har ni några barn?", "en": "Do you have any children?"}, {"sv": "Jag oroar mig för hennes säkerhet", "en": "I fear for her safety"}, {"sv": "Vem är det som talar?", "en": "Who is speaking?"}, {"sv": "Vid vilken tid?", "en": "At what time?"}, {"sv": "Vi hade en bra start", "en": "We had a good start"}, {"sv": "Jag är 26 år gammal", "en": "I'm 26 years old"}, {"sv": "Följande dag", "en": "The following day"}, {"sv": "Det där är inte rätt", "en": "That's not right"}, {"sv": "Denna månad", "en": "This month"}, {"sv": "Se upp!", "en": "Watch out!"}, {"sv": "Vänd er om", "en": "Turn around"}, {"sv": "Jag hatar att vänta", "en": "I hate waiting"}, {"sv": "Är det riskabelt?", "en": "It snowed last night"}, {"sv": "Det snöade igår kväll", "en": "Can you speak louder please?"}, {"sv": "Ta er den tid ni behöver", "en": "Take your time"}, {"sv": "Det är sant", "en": "That's true"}, {"sv": "Jag bor i [plats]", "en": "I live in [location]"}, {"sv": "Vad blir det till middag?", "en": "What is for dinner?"}, {"sv": "Jag kommer tillbaka senare", "en": "I'll come back later"}, {"sv": "Vi har inga barn", "en": "We do not have any children"}];
+
+const STORAGE_KEY = 'svenska_fraser_v1';
+let round = 1, queue = [], currentIdx = 0, currentWord = null, revealed = false;
+let ratings = { easy: 0, medium: 0, hard: 0 };
+let wordRatings = {};
+
+function lsSave(d) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch(e) {} }
+function lsLoad() { try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : null; } catch(e) { return null; } }
+function lsClear() { try { localStorage.removeItem(STORAGE_KEY); } catch(e) {} }
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildRound1Queue() {
+  return shuffle(ALL_PHRASES.map((w, i) => ({ ...w, origIdx: i })));
+}
+
+function buildRound2PlusQueue() {
+  const arr = [];
+  ALL_PHRASES.forEach((w, i) => {
+    const r = wordRatings[i];
+    arr.push({ ...w, origIdx: i });
+    if (r === 'hard') arr.push({ ...w, origIdx: i }); // hard appears twice
+  });
+  return shuffle(arr);
+}
+
+function saveState() {
+  lsSave({ round, currentIdx, ratings, wordRatings, queueIdxs: queue.map(w => w.origIdx) });
+}
+
+function loadState() {
+  const d = lsLoad();
+  if (!d) return false;
+  round = d.round || 1;
+  currentIdx = d.currentIdx || 0;
+  ratings = d.ratings || { easy: 0, medium: 0, hard: 0 };
+  wordRatings = d.wordRatings || {};
+  queue = (d.queueIdxs || []).map(idx => {
+    const w = ALL_PHRASES[idx];
+    return w ? { ...w, origIdx: idx } : null;
+  }).filter(Boolean);
+  return queue.length > 0;
+}
+
+function startNextRound() {
+  document.getElementById('round-complete').classList.remove('active');
+  round++;
+  queue = buildRound2PlusQueue();
+  currentIdx = 0;
+  ratings = { easy: 0, medium: 0, hard: 0 };
+  updateStats();
+  saveState();
+  showCard();
+}
+
+function showCard() {
+  if (currentIdx >= queue.length) { showRoundComplete(); return; }
+  currentWord = queue[currentIdx];
+  revealed = false;
+  const card = document.getElementById('flashcard');
+  card.classList.remove('animating');
+  void card.offsetWidth;
+  card.classList.add('animating');
+  document.getElementById('swedish-phrase').textContent = currentWord.sv;
+  const enEl = document.getElementById('english-phrase');
+  enEl.textContent = currentWord.en;
+  enEl.classList.remove('revealed');
+  document.getElementById('tap-hint').style.display = '';
+  document.getElementById('rating-section').classList.remove('visible');
+  updateProgress();
+}
+
+function revealCard() {
+  if (revealed) return;
+  revealed = true;
+  document.getElementById('english-phrase').classList.add('revealed');
+  document.getElementById('tap-hint').style.display = 'none';
+  document.getElementById('rating-section').classList.add('visible');
+}
+
+function rate(difficulty) {
+  if (!revealed) return;
+  if (currentWord !== null) wordRatings[currentWord.origIdx] = difficulty;
+  ratings[difficulty]++;
+  updateStats(difficulty);
+  currentIdx++;
+  saveState();
+  showCard();
+}
+
+function updateProgress() {
+  const total = queue.length, done = currentIdx;
+  document.getElementById('progress-text').textContent = done + ' / ' + total;
+  document.getElementById('progress-fill').style.width = (total > 0 ? (done / total) * 100 : 0) + '%';
+  document.getElementById('round-badge').textContent = 'Round ' + round;
+}
+
+function updateStats(bumped) {
+  document.getElementById('easy-count').textContent = ratings.easy + ' easy';
+  document.getElementById('medium-count').textContent = ratings.medium + ' medium';
+  document.getElementById('hard-count').textContent = ratings.hard + ' hard';
+  document.getElementById('pill-easy-num').textContent = ratings.easy;
+  document.getElementById('pill-medium-num').textContent = ratings.medium;
+  document.getElementById('pill-hard-num').textContent = ratings.hard;
+  if (bumped) {
+    const pill = document.getElementById('pill-' + bumped);
+    pill.classList.remove('bumped');
+    void pill.offsetWidth;
+    pill.classList.add('bumped');
+    setTimeout(() => pill.classList.remove('bumped'), 300);
+  }
+}
+
+function showRoundComplete() {
+  document.getElementById('rc-easy').textContent = ratings.easy;
+  document.getElementById('rc-medium').textContent = ratings.medium;
+  document.getElementById('rc-hard').textContent = ratings.hard;
+  const hardCount = Object.values(wordRatings).filter(r => r === 'hard').length;
+  if (round === 1) {
+    document.getElementById('rc-title').textContent = 'Round 1 Complete!';
+    document.getElementById('rc-desc').textContent = 'You went through all ' + (ratings.easy+ratings.medium+ratings.hard).toLocaleString() + ' phrases. Next round: hard phrases appear twice for extra practice.';
+    document.getElementById('continue-btn').textContent = 'Start Round 2 →';
+  } else {
+    document.getElementById('rc-title').textContent = 'Round ' + round + ' Complete!';
+    document.getElementById('rc-desc').textContent = 'Great work! You still have ' + hardCount.toLocaleString() + ' hard phrase' + (hardCount !== 1 ? 's' : '') + ' to master.';
+    document.getElementById('continue-btn').textContent = 'Start Round ' + (round+1) + ' →';
+  }
+  document.getElementById('round-complete').classList.add('active');
+}
+
+function exportRatings() {
+  let r = wordRatings;
+  if (!r || Object.keys(r).length === 0) {
+    const saved = lsLoad();
+    if (saved && saved.wordRatings) r = saved.wordRatings;
+  }
+  const easy = [], medium = [], hard = [], unrated = [];
+  ALL_PHRASES.forEach((p, i) => {
+    const rating = r[i];
+    if (rating === 'easy') easy.push(p);
+    else if (rating === 'medium') medium.push(p);
+    else if (rating === 'hard') hard.push(p);
+    else unrated.push(p);
+  });
+  if (easy.length + medium.length + hard.length === 0) {
+    alert('No ratings yet! Study some phrases first, then export.');
+    return;
+  }
+  const rows = [['Rating','Swedish','English']];
+  easy.forEach(p => rows.push(['Easy', p.sv, p.en]));
+  medium.forEach(p => rows.push(['Medium', p.sv, p.en]));
+  hard.forEach(p => rows.push(['Hard', p.sv, p.en]));
+  unrated.forEach(p => rows.push(['Unrated', p.sv, p.en]));
+  const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'swedish_phrase_ratings.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function confirmReset() { document.getElementById('confirm-overlay').classList.add('active'); }
+function cancelReset() { document.getElementById('confirm-overlay').classList.remove('active'); }
+function doReset() {
+  lsClear();
+  round = 1; currentIdx = 0;
+  ratings = { easy: 0, medium: 0, hard: 0 };
+  wordRatings = {};
+  queue = buildRound1Queue();
+  document.getElementById('confirm-overlay').classList.remove('active');
+  updateStats();
+  showCard();
+}
+
+document.getElementById('flashcard').addEventListener('click', revealCard);
+document.getElementById('flashcard').addEventListener('keydown', e => {
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); revealCard(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.target.closest('.rating-buttons') || e.target.closest('.continue-btn')) return;
+  if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); revealCard(); }
+  if (revealed) {
+    if (e.key === '1') rate('easy');
+    if (e.key === '2') rate('medium');
+    if (e.key === '3') rate('hard');
+  }
+});
+
+function init() {
+  if (!loadState()) {
+    queue = buildRound1Queue();
+    currentIdx = 0;
+  }
+  updateStats();
+  showCard();
+}
+init();
+</script>
+</body>
+</html>
